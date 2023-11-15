@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  This template contains IAM permissions for access that's not specific to an application.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: integration
+    AllowedValues:
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK One Login
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Interventions Service
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: PLACEHOLDER
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: govuk-one-login/ais-infra/iam-permissions/template.yaml
+
+Resources:
+  ControlTowerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      # checkov:skip=CKV_AWS_61: Ensure AWS IAM policy does not allow to assume role permission across all services.
+      RoleName: AWSControlTowerExecution
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "arn:aws:iam::892537467220:root"
+            Action: sts:AssumeRole
+            Condition: {}
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+        - Key: CheckovRulesToSkip
+          Value: CKV_AWS_61
