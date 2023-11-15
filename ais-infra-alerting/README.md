@@ -10,7 +10,7 @@ You can use the following command to export credentials into your shell:
 eval $(gds aws di-id-reuse-core-<environment>-admin -e)
 ```
 Replace `<environment>` with the environment you are deploying to, in this instance for `di-id-reuse-core` AWS accounts
-Allowed values are `build` and `staging` 
+Allowed values are `dev` `build` and `staging` 
 
 Whereas to deploy to `integration` and  `production` you'd need to Login into the Account Interventions Service AWS accounts using sso 
 
