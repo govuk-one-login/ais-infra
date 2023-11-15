@@ -9,8 +9,19 @@ You can use the following command to export credentials into your shell:
 ```bash
 eval $(gds aws di-id-reuse-core-<environment>-admin -e)
 ```
-Replace `<environment>` with the environment you are deploying into.
-Allowed values are `build`, `staging`, `integration`, `production`.
+Replace `<environment>` with the environment you are deploying to, in this instance for `di-id-reuse-core` AWS accounts
+Allowed values are `build` and `staging` 
+
+Whereas to deploy to `integration` and  `production` you'd need to Login into the Account Interventions Service AWS accounts using sso 
+
+`Integration`: 
+```bash
+aws sso login --profile di-account-intervention-admin-217747075921
+```
+`Production`: 
+```bash
+aws sso login --profile di-account-intervention-admin-324281879537
+```
 
 ## How to Deploy
 To deploy this SAM template, follow these steps:
