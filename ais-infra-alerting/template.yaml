@@ -1,0 +1,393 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: >-
+  This stack sets up the resources required for AIS alerting
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK One Login
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: PLACEHOLDER
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: govuk-one-login/ais-infra/ais-infra-alerting/template.yaml
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Interventions Service
+  SlackWorkspaceId:
+    Description: >
+      The ID of the Slack workspace where alert notification messages are
+      posted. This is retrieved from the AWS Chatbot integration.
+    Type: String
+    Default: "T8GT9416G"
+    AllowedPattern: "\\w+"
+    ConstraintDescription: "must be an AWS Chatbot Slack workspace ID"
+  SlackChannelId:
+    Description: >
+      The ID of the Slack channel where alert notification messages are posted.
+      This is taken from the channel details in Slack.
+      Default is the di-accounts-bravo-ais-notifications channel.
+    Type: String
+    Default: "C065MT3RKV4" # di-accounts-bravo-ais-notifications
+    AllowedPattern: "\\w+"
+    ConstraintDescription: "must be a Slack channel ID"
+  SubscriptionEndpoint:
+    Description: >
+      External API subscription endpoint i.e. PagerDuty events integration API
+    Type: String
+    Default: "none"
+    AllowedPattern: "(^https://.+)|(none)"
+    ConstraintDescription: "Must be a URL of format (https://.*) or leave as 'none'"
+  InitialNotificationStack:
+    Description: >
+      (Optional) Is this the first notification stack to be created in this account?
+    Type: String
+    Default: "No"
+    AllowedValues:
+      - "Yes"
+      - "No"
+
+Conditions:
+  CreateSNSSubscription:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref SubscriptionEndpoint
+          - "none"
+  IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ] ]
+  IsInternal: !Or [ !Equals [ !Ref Environment, dev ], !Equals [ !Ref Environment, build ],!Equals [ !Ref Environment, staging ] ]
+  IsDeployServiceLinkedRoles:
+    Fn::Equals:
+      - !Ref InitialNotificationStack
+      - "Yes"
+  IsServiceLinkRoleRequired: !And
+    - !Condition IsNotDevelopment
+    - !Condition IsDeployServiceLinkedRoles
+
+Resources:
+  #
+  # CloudWatch Alert High Severity SNS Topic
+  #
+
+  HighAlertNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-HighAlertNotificationTopic"
+      KmsMasterKeyId: !Ref NotificationTopicKey
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-HighAlertNotificationTopic"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  HighAlertNotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref HighAlertNotificationTopic
+      PolicyDocument:
+        Statement:
+          - Sid: AllowCloudWatchAlarmsToPublishToSNS
+            Action: "sns:Publish"
+            Effect: Allow
+            Resource: !Ref HighAlertNotificationTopic
+            Principal:
+              Service: cloudwatch.amazonaws.com
+
+  #
+  # CloudWatch Alert Low Severity SNS Topic
+  #
+
+  LowAlertNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-LowAlertNotificationTopic"
+      KmsMasterKeyId: !Ref NotificationTopicKey
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-LowAlertNotificationTopic"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  LowAlertNotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref LowAlertNotificationTopic
+      PolicyDocument:
+        Statement:
+          - Sid: AllowCloudWatchAlarmsToPublishToSNS
+            Action: "sns:Publish"
+            Effect: Allow
+            Resource: !Ref LowAlertNotificationTopic
+            Principal:
+              Service: cloudwatch.amazonaws.com
+
+  #
+  # Pipeline Build SNS Topic
+  #
+
+  BuildNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-BuildNotificationTopic"
+      KmsMasterKeyId: !Ref NotificationTopicKey
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "BuildNotificationTopic"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  BuildNotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref BuildNotificationTopic
+      PolicyDocument:
+        Statement:
+          - Action: "sns:Publish"
+            Effect: Allow
+            Resource: !Ref BuildNotificationTopic
+            Principal:
+              Service: codestar-notifications.amazonaws.com
+
+  #
+  # Shared SNS KMS Key
+  #
+
+  NotificationTopicKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: "Allow the account to manage the key"
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+          - Sid: "Allow CodeStar Notifications to enqueue encrypted messages"
+            Effect: Allow
+            Resource: "*"
+            Action:
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Principal:
+              Service: codestar-notifications.amazonaws.com
+          - Sid: "Allow Cloudwatch alerts access"
+            Effect: Allow
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource:
+              - "*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-NotificationTopicKey"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  #
+  # Slack Chatbot Integration
+  #
+
+  ChatbotRole:
+    Condition: IsNotDevelopment
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "chatbot.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-ChatBotPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: "DescribeLogs"
+                Effect: "Allow"
+                Action:
+                  - "logs:DescribeQueryDefinitions"
+                  - "logs:DescribeMetricFilters"
+                  - "logs:DescribeLogGroups"
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:*"
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "ChatbotRole"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  ChatbotChannelConfiguration:
+    Condition: IsNotDevelopment
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    Properties:
+      ConfigurationName: !Sub "${AWS::StackName}-slack-notifications"
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      SlackChannelId: !Ref SlackChannelId
+      SlackWorkspaceId: !Ref SlackWorkspaceId
+      SnsTopicArns:
+        - !Ref HighAlertNotificationTopic
+        - !Ref LowAlertNotificationTopic
+        - !Ref BuildNotificationTopic
+
+  CodeStarNotificationsServiceLinkedRole:
+    Condition: IsServiceLinkRoleRequired
+    Type: AWS::IAM::ServiceLinkedRole
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3011  # The UpdateReplacePolicy does not apply to this resource
+    Properties:
+      AWSServiceName: codestar-notifications.amazonaws.com
+
+  ChatbotServiceLinkedRole:
+    Condition: IsServiceLinkRoleRequired
+    Type: AWS::IAM::ServiceLinkedRole
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3011  # The UpdateReplacePolicy does not apply to this resource
+    Properties:
+      AWSServiceName: management.chatbot.amazonaws.com
+
+  #
+  # PagerDuty Integration
+  #
+
+  AlertNotificationTopicSubscription:
+    Condition: CreateSNSSubscription
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref SubscriptionEndpoint
+      Protocol: 'https'
+      TopicArn: !Ref HighAlertNotificationTopic
+
+  #
+  # SSM Parameter
+  #
+
+  HighAlertNotificationTopicArnSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The ARN of the High Alert Notification SNS Topic used for Alert actions
+      Name: !Sub "/${AWS::StackName}/SNS/HighAlertNotificationTopic/ARN"
+      Type: String
+      Value: !Ref HighAlertNotificationTopic
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  LowAlertNotificationTopicArnSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The ARN of the Low Alert Notification SNS Topic used for Alert actions
+      Name: !Sub "/${AWS::StackName}/SNS/LowAlertNotificationTopic/ARN"
+      Type: String
+      Value: !Ref LowAlertNotificationTopic
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  BuildNotificationTopicArnSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The ARN of the Build Notification SNS Topic used for Alert actions
+      Name: !Sub "/${AWS::StackName}/SNS/BuildNotificationTopic/ARN"
+      Type: String
+      Value: !Ref BuildNotificationTopic
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+Outputs:
+  BuildNotificationTopicArn:
+    Description: >
+      The ARN of the SNS topic that receives CodePipeline build notifications that gets sent to Slack.
+    Value: !Ref BuildNotificationTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-BuildNotificationTopicArn"
