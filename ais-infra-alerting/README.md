@@ -36,9 +36,9 @@ sam deploy --guided
 ```
 The `--guided` flag will prompt you to input the necessary parameters for the deployment, such as the stack name, region, and environment.
 
-For the Parameter `InitialNotificationStack` select `No` in `build` and `staging` env because this is not the first time that we will be deploying 
-a infra-alerting stack, and therefore would not need to create these two Service Linked Roles `AWSServiceRoleForCodeStarNotifications` & `AWSServiceRoleForAWSChatbot` again. 
-However, in `integration` and `production` env would need to change over the parameter value to `Yes` as these two service linked roles have not yet been created in the account. 
+For the Parameter `InitialNotificationStack` select `No` in all environments when deploying the stack infra-alerting stack, 
+we would not need to create these two Service Linked Roles `AWSServiceRoleForCodeStarNotifications` & `AWSServiceRoleForAWSChatbot`
+as they have already been created in the accounts. 
 
 After the deployment is complete, you can check the CloudFormation stack status in the AWS Management Console or by using the AWS CLI:
 ```bash
