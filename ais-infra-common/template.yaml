@@ -46,7 +46,7 @@ Resources:
     Properties:
       Name: "dynatrace-api-token"
       Description: "Dynatrace API token"
-      SecretString: "dt0c01.ESVFDCGJZEL6W7WUTCGKZAQN.QUFK5TZVRP3RNV4AAANE4MYXZIXVXWGRG2BHHU3WONNNM5EQERYZFKXFMQFGCGOJ" # uses the default aws/secretsmanager key to encrypt the secret string
+      SecretString: "placeholder-value" # uses the default aws/secretsmanager key to encrypt the secret string
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
