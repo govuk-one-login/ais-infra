@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  Externalises values referenced across multiple CloudFormation Stacks.
+  This prevents having to individually update each reference of a single value across multiple stacks or resources.
+  Values will instead resolve as SSM parameters or Secrets acting as the single source of truth.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK One Login
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Interventions Service
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: PLACEHOLDER
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: govuk-one-login/ais-infra/ais-infra-common/template.yaml
+
+Resources:
+
+  ###########
+  # SECRETS #
+  ###########
+
+  # see https://govukverify.atlassian.net/wiki/spaces/PLAT/pages/3660317070/How+to+add+secure+pipelines+metrics+to+Dynatrace
+  DynatraceApiToken:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: "dynatrace-api-token"
+      Description: "Dynatrace API token"
+      SecretString: "dt0c01.ESVFDCGJZEL6W7WUTCGKZAQN.QUFK5TZVRP3RNV4AAANE4MYXZIXVXWGRG2BHHU3WONNNM5EQERYZFKXFMQFGCGOJ" # uses the default aws/secretsmanager key to encrypt the secret string
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-DynatraceApiToken"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
