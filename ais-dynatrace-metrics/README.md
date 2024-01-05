@@ -43,3 +43,4 @@ After the deployment is complete, you can check the CloudFormation stack status 
 ```bash
 aws cloudformation describe-stacks --stack-name ais-dynatrace-metrics --region eu-west-2
 ```
+Note: Make sure you have deployed ais-infra-common stack first and updated the Secrets PLACEHOLDER values prior to deploying this stack.
