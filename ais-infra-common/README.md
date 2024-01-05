@@ -41,3 +41,7 @@ After the deployment is complete, you can check the CloudFormation stack status 
 ```bash
 aws cloudformation describe-stacks --stack-name ais-infra-common --region eu-west-2
 ```
+#### ⚠️ Once this stack has been deployed, manually set the value of the secrets in AWS Console, values to be provided by - https://gds.slack.com/archives/C04UF0B02NR
+This step must be done prior to progressing to deploying the `ais-dynatrace-metrics`  and `ais-main` stack.
+
+#### ❗If the Secret values are changed both `ais-dynatrace-metrics`  and `ais-main` stack need to be redeployed so that the new values are used instead.

@@ -7,6 +7,14 @@ integration with CloudWatch Metric Streams to ingest AWS metrics for Account Int
 This Stack is to be deployed manually once per account/environment.
 
 ## Prerequisites
+
+#### ⚠️ Task to be carried out prior to deployment ⚠️
+
+- [ ] Deploy `ais-infra-common` template first
+- [ ] Manually update the Secret DynatraceApiKey to the provided value by https://gds.slack.com/archives/C04UF0B02NR
+
+❗Once these steps have been taken you can deploy this stack following the instructions below
+
 Export credentials for the AWS account where you want to deploy the application.
 You can use the following command to export credentials into your shell:
 ```bash
