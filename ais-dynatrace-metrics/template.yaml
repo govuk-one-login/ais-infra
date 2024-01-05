@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 
 Description: >
   Infrastructure required for Dynatrace integration with CloudWatch Metric Streams to ingest
-  AWS metrics for VC Storage.
+  AWS metrics for Account Interventions Service.
 
 Parameters:
   Environment:
