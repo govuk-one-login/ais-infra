@@ -2,9 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Description: >
-  Externalises values referenced across multiple CloudFormation Stacks.
-  This prevents having to individually update each reference of a single value across multiple stacks or resources.
-  Values will instead resolve as SSM parameters or Secrets acting as the single source of truth.
+  This stack contains AWS Secrets used for Dynatrace.
 
 Parameters:
   Environment:
@@ -44,7 +42,7 @@ Resources:
   DynatraceApiToken:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: "dynatrace-api-token"
+      Name: !Sub "/${AWS::StackName}/Dynatrace/Api/Token"
       Description: "Dynatrace API token"
       SecretString: "placeholder-value" #pragma: allowlist secret uses the default aws/secretsmanager key to encrypt the secret string
       Tags:
@@ -56,6 +54,26 @@ Resources:
           Value: !Ref Environment
         - Key: Name
           Value: !Sub "${AWS::StackName}-DynatraceApiToken"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  DynatraceApiKey:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/${AWS::StackName}/Dynatrace/Metric/Api/Key"
+      Description: "Dynatrace Api Key for Namespace Metrics"
+      SecretString: "placeholder-value" # pragma: allowlist secret  uses the default aws/secretsmanager key to encrypt the secret string
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-DynatraceApiKey"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
