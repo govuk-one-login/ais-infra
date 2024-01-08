@@ -23,7 +23,7 @@ Parameters:
   InfraCommonStackName:
     Description: The name of the Infra Common stack
     Type: String
-    Default: infra-common
+    Default: ais-infra-common
   ProductTagValue:
     Description: Value for the Product Tag
     Type: String
