@@ -1,0 +1,11 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "ais-iam-permissions"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-44r43ey3knwx"
+s3_prefix = "ais-iam-permissions"
+region = "eu-west-2"
+capabilities = "CAPABILITY_NAMED_IAM"
+image_repositories = []
+parameter_overrides = "Environment=\"staging\""
