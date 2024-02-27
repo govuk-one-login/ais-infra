@@ -21,7 +21,7 @@ Parameters:
   OwnerTagValue:
     Description: Value for the Owner Tag
     Type: String
-    Default: PLACEHOLDER
+    Default: interventions@digital.cabinet-office.gov.uk
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
@@ -70,7 +70,6 @@ Conditions:
           - !Ref SubscriptionEndpoint
           - "none"
   IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ] ]
-  IsInternal: !Or [ !Equals [ !Ref Environment, dev ], !Equals [ !Ref Environment, build ],!Equals [ !Ref Environment, staging ] ]
   IsDeployServiceLinkedRoles:
     Fn::Equals:
       - !Ref InitialNotificationStack
