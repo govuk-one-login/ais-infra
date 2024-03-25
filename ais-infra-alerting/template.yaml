@@ -38,24 +38,6 @@ Parameters:
     Default: "T8GT9416G"
     AllowedPattern: "\\w+"
     ConstraintDescription: "must be an AWS Chatbot Slack workspace ID"
-  SlackChannelId:
-    Description: >
-      The ID of the Slack channel where alert notification messages are posted from our non-prod environments.
-      This is taken from the channel details in Slack.
-      Default is the di-accounts-bravo-ais-notifications channel.
-    Type: String
-    Default: "C065MT3RKV4" # di-accounts-bravo-ais-notifications
-    AllowedPattern: "\\w+"
-    ConstraintDescription: "must be a Slack channel ID"
-  SlackChannelIdProd:
-    Description: >
-      The ID of the Slack channel where alert notification messages are posted for our Prod environment.
-      This is taken from the channel details in Slack.
-      Default is the di-accounts-bravo-ais-notifications-prod channel.
-    Type: String
-    Default: "C06R67X2EBC" # di-accounts-bravo-ais-notifications-prod
-    AllowedPattern: "\\w+"
-    ConstraintDescription: "must be a Slack channel ID"
   SubscriptionEndpoint:
     Description: >
       External API subscription endpoint i.e. PagerDuty events integration API
@@ -306,8 +288,8 @@ Resources:
       IamRoleArn: !GetAtt ChatbotRole.Arn
       SlackChannelId: !If
         - IsProd
-        - !Ref SlackChannelIdProd
-        - !Ref SlackChannelId
+        - C06R67X2EBC # di-accounts-bravo-ais-notifications-prod
+        - C065MT3RKV4 # di-accounts-bravo-ais-notifications
       SlackWorkspaceId: !Ref SlackWorkspaceId
       SnsTopicArns:
         - !Ref HighAlertNotificationTopic
