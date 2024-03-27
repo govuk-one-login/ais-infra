@@ -42,7 +42,7 @@ Parameters:
     Description: >
       External API subscription endpoint i.e. PagerDuty events integration API
     Type: String
-    Default: "none"
+    Default: "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
     AllowedPattern: "(^https://.+)|(none)"
     ConstraintDescription: "Must be a URL of format (https://.*) or leave as 'none'"
   InitialNotificationStack:
