@@ -38,13 +38,6 @@ Parameters:
     Default: "T8GT9416G"
     AllowedPattern: "\\w+"
     ConstraintDescription: "must be an AWS Chatbot Slack workspace ID"
-  SubscriptionEndpoint:
-    Description: >
-      External API subscription endpoint i.e. PagerDuty events integration API
-    Type: String
-    Default: "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
-    AllowedPattern: "(^https://.+)|(none)"
-    ConstraintDescription: "Must be a URL of format (https://.*) or leave as 'none'"
   InitialNotificationStack:
     Description: >
       (Optional) Is this the first notification stack to be created in this account?
@@ -55,11 +48,6 @@ Parameters:
       - "No"
 
 Conditions:
-  CreateSNSSubscription:
-    Fn::Not:
-      - Fn::Equals:
-          - !Ref SubscriptionEndpoint
-          - "none"
   IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ]]
   IsProd: !Equals [!Ref Environment, production]
   IsDeployServiceLinkedRoles:
@@ -325,10 +313,12 @@ Resources:
   #
 
   AlertNotificationTopicSubscription:
-    Condition: CreateSNSSubscription
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !Ref SubscriptionEndpoint
+      Endpoint: !If
+        - IsProd
+        - "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
+        - "none"
       Protocol: 'https'
       TopicArn: !Ref HighAlertNotificationTopic
 
