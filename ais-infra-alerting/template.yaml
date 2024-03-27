@@ -313,12 +313,10 @@ Resources:
   #
 
   AlertNotificationTopicSubscription:
+    Condition: IsProd
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: !If
-        - IsProd
-        - "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
-        - "none"
+      Endpoint: "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
       Protocol: 'https'
       TopicArn: !Ref HighAlertNotificationTopic
 
