@@ -48,8 +48,9 @@ Parameters:
       - "No"
 
 Conditions:
-  IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ]]
-  IsProd: !Equals [!Ref Environment, production]
+#  IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ]]
+  IsNotDevelopment: !Equals [!Ref Environment, dev]
+  IsProd: !Equals [!Ref Environment, dev]
   IsDeployServiceLinkedRoles:
     Fn::Equals:
       - !Ref InitialNotificationStack
@@ -316,7 +317,7 @@ Resources:
     Condition: IsProd
     Type: AWS::SNS::Subscription
     Properties:
-      Endpoint: "https://events.pagerduty.com/integration/96e06442f974460fd0dd0b45a26c8f52/enqueue"
+      Endpoint: "https://www.bbc.co.uk"
       Protocol: 'https'
       TopicArn: !Ref HighAlertNotificationTopic
 
