@@ -10,4 +10,5 @@ Ensure pre-commit is enabled at the root of the directory
 ```cd ais-infra ``` and apply the following command
 ```shell
 $ pre-commit install -f
+$ pre-commit install --hook-type commit-msg
 ```
