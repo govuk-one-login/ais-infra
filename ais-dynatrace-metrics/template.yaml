@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 
 Description: >
@@ -19,7 +19,7 @@ Parameters:
   FirehoseHttpDeliveryEndpoint:
     Description: URL to which Firehose will deliver stream
     Type: String
-    Default: 'https://aws.cloud.dynatrace.com/metrics'
+    Default: "https://aws.cloud.dynatrace.com/metrics"
   InfraCommonStackName:
     Description: The name of the Infra Common stack
     Type: String
@@ -42,10 +42,14 @@ Parameters:
     Default: govuk-one-login/ais-infra/ais-dynatrace-metrics/template.yaml
 
 Conditions:
-  IsNonProd: !Or [ !Equals [ !Ref Environment, dev ], !Equals [ !Ref Environment, build ],!Equals [ !Ref Environment, staging ]]
+  IsNonProd:
+    !Or [
+      !Equals [!Ref Environment, dev],
+      !Equals [!Ref Environment, build],
+      !Equals [!Ref Environment, staging],
+    ]
 
 Resources:
-
   ###########
   # DYNATRACE #
   ###########
@@ -67,8 +71,8 @@ Resources:
             - AttributeName: dt-url
               AttributeValue: !If
                 - IsNonProd
-                - 'https://khw46367.live.dynatrace.com'
-                - 'https://bhe21058.live.dynatrace.com'
+                - "https://khw46367.live.dynatrace.com"
+                - "https://bhe21058.live.dynatrace.com"
             - AttributeName: require-valid-certificate
               AttributeValue: true
           ContentEncoding: GZIP
@@ -125,6 +129,9 @@ Resources:
           - ServerSideEncryptionByDefault:
               KMSMasterKeyID: !GetAtt DynatraceKmsKey.Arn
               SSEAlgorithm: "aws:kms"
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LogBucket
+        LogFilePrefix: "s3-config-access-logs/"
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -148,12 +155,12 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - 's3:AbortMultipartUpload'
-              - 's3:GetBucketLocation'
-              - 's3:GetObject'
-              - 's3:ListBucket'
-              - 's3:ListBucketMultipartUploads'
-              - 's3:PutObject'
+              - "s3:AbortMultipartUpload"
+              - "s3:GetBucketLocation"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:PutObject"
             Resource:
               - !GetAtt FailedDataBucket.Arn
               - !Sub "${FailedDataBucket.Arn}/*"
@@ -163,6 +170,14 @@ Resources:
               - "kms:GenerateDataKey"
             Resource:
               - !GetAtt DynatraceKmsKey.Arn
+          - Effect: Deny
+            Action: "*"
+            Resource: # for the bucket and all its objects
+              - !Sub arn:aws:s3:::${FailedDataBucket}
+              - !Sub arn:aws:s3:::${FailedDataBucket}/*
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
 
   FailedDataBucketRole:
     Type: AWS::IAM::Role
@@ -173,10 +188,10 @@ Resources:
           - Effect: Allow
             Principal:
               Service: firehose.amazonaws.com
-            Action: 'sts:AssumeRole'
+            Action: "sts:AssumeRole"
             Condition:
               StringEquals:
-                'sts:ExternalId': !Ref 'AWS::AccountId'
+                "sts:ExternalId": !Ref "AWS::AccountId"
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -188,6 +203,42 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+
+  LogBucket:
+    # checkov:skip=CKV_AWS_18: Access logging not needed for LogBucket
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${Environment}-${AWS::StackName}-log-bucket
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt DynatraceKmsKey.Arn
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  LogBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LogBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Deny
+            Principal:
+              AWS: "*"
+            Action: "*"
+            Resource: # for the bucket and all its objects
+              - !Sub arn:aws:s3:::${LogBucket}
+              - !Sub arn:aws:s3:::${LogBucket}/*
+            Condition:
+              Bool:
+                "aws:SecureTransport": false
 
   DynatraceKmsKey:
     Type: AWS::KMS::Key
@@ -255,7 +306,7 @@ Resources:
               Service:
                 - streams.metrics.cloudwatch.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
+              - "sts:AssumeRole"
       Path: /
       Policies:
         - PolicyName: root
@@ -264,8 +315,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 'firehose:PutRecord'
-                  - 'firehose:PutRecordBatch'
+                  - "firehose:PutRecord"
+                  - "firehose:PutRecordBatch"
                 Resource: !GetAtt FirehoseMetricStreams.Arn
       Tags:
         - Key: Product
@@ -284,7 +335,7 @@ Resources:
     Properties:
       FirehoseArn: !GetAtt FirehoseMetricStreams.Arn
       RoleArn: !GetAtt MetricStreamsRole.Arn
-      OutputFormat: 'opentelemetry0.7'
+      OutputFormat: "opentelemetry0.7"
       IncludeFilters:
         - Namespace: !Ref SystemTagValue
       Tags:
