@@ -256,11 +256,11 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  ChatBotPolicy:
+  ChatbotPolicy:
     Condition: IsNotDevelopment
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: !Sub "${AWS::StackName}-ChatBotPolicy"
+      ManagedPolicyName: !Sub "${AWS::StackName}-ChatbotPolicy"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
