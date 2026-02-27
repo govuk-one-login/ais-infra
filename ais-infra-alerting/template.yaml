@@ -239,18 +239,6 @@ Resources:
               Service: "chatbot.amazonaws.com"
             Action:
               - "sts:AssumeRole"
-      Policies:
-        - PolicyName: !Sub "${AWS::StackName}-ChatBotPolicy"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: "DescribeLogs"
-                Effect: "Allow"
-                Action:
-                  - "logs:DescribeQueryDefinitions"
-                  - "logs:DescribeMetricFilters"
-                  - "logs:DescribeLogGroups"
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:*"
       Tags:
         - Key: Name
           Value: !Join
@@ -267,6 +255,24 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+
+  ChatBotPolicy:
+    Condition: IsNotDevelopment
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${AWS::StackName}-ChatBotPolicy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "DescribeLogs"
+            Effect: "Allow"
+            Action:
+              - "logs:DescribeQueryDefinitions"
+              - "logs:DescribeMetricFilters"
+              - "logs:DescribeLogGroups"
+            Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group::log-stream:*"
+      Roles:
+        - !Ref ChatbotRole
 
   ChatbotChannelConfiguration:
     Condition: IsNotDevelopment
