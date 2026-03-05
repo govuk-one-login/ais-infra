@@ -5,7 +5,11 @@ version = 0.1
 stack_name = "ais-infra-alerting"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-44r43ey3knwx"
 s3_prefix = "ais-infra-alerting"
-region = "eu-west-2"
 capabilities = "CAPABILITY_NAMED_IAM"
 image_repositories = []
-parameter_overrides = "Environment=\"build\""
+parameter_overrides = "Environment=\"dev\" ProductTagValue=\"GOV.UK One Login\" OwnerTagValue=\"interventions@digital.cabinet-office.gov.uk\" SourceTagValue=\"govuk-one-login/ais-infra/ais-infra-alerting/template.yaml\" SystemTagValue=\"Account Interventions Service\" SlackWorkspaceId=\"T8GT9416G\" InitialNotificationStack=\"No\""
+resolve_s3 = true
+confirm_changeset = true
+
+[default.global.parameters]
+region = "eu-west-2"
