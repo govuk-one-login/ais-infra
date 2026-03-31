@@ -47,6 +47,15 @@ Parameters:
       - "Yes"
       - "No"
 
+Mappings:
+  SlackChannel:
+    Environment:
+      dev: 'C065MT3RKV4' #di-one-login-home-ais-nonprod
+      build: 'C0APVG2L5E1' #di-fraud-ais-build-alarms
+      staging: 'C065MT3RKV4' #di-one-login-home-ais-nonprod
+      integration: 'C065MT3RKV4' #di-one-login-home-ais-nonprod
+      production: 'C06R67X2EBC' #di-one-login-home-ais-prod
+
 Conditions:
   IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ]]
   IsProd: !Equals [!Ref Environment, production]
@@ -280,10 +289,7 @@ Resources:
     Properties:
       ConfigurationName: !Sub "${AWS::StackName}-slack-notifications"
       IamRoleArn: !GetAtt ChatbotRole.Arn
-      SlackChannelId: !If
-        - IsProd
-        - C06R67X2EBC # di-accounts-bravo-ais-notifications-prod
-        - C065MT3RKV4 # di-accounts-bravo-ais-notifications
+      SlackChannelId: !FindInMap [SlackChannel, Environment, !Ref Environment]
       SlackWorkspaceId: !Ref SlackWorkspaceId
       SnsTopicArns:
         - !Ref HighAlertNotificationTopic
