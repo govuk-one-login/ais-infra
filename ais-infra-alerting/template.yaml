@@ -55,6 +55,13 @@ Mappings:
       staging: 'C065MT3RKV4' #di-one-login-home-ais-nonprod
       integration: 'C065MT3RKV4' #di-one-login-home-ais-nonprod
       production: 'C06R67X2EBC' #di-one-login-home-ais-prod
+  BuildNotificationSlackChannel:
+    Environment:
+      dev: 'C0ANYQQD622' #di-fraud-ais-build-notifications
+      build: 'C0ANYQQD622' #di-fraud-ais-build-notifications
+      staging: 'C0ANYQQD622' #di-fraud-ais-build-notifications
+      integration: 'C0ANYQQD622' #di-fraud-ais-build-notifications
+      production: 'C0ANYQQD622' #di-fraud-ais-build-notifications
 
 Conditions:
   IsNotDevelopment: !Not [ !Equals [ !Ref Environment, dev ]]
@@ -294,6 +301,16 @@ Resources:
       SnsTopicArns:
         - !Ref HighAlertNotificationTopic
         - !Ref LowAlertNotificationTopic
+
+  BuildNotificationsChatbotChannelConfiguration:
+    Condition: IsNotDevelopment
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    Properties:
+      ConfigurationName: !Sub "${AWS::StackName}-slack-notifications"
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      SlackChannelId: !FindInMap [BuildNotificationSlackChannel, Environment, !Ref Environment]
+      SlackWorkspaceId: !Ref SlackWorkspaceId
+      SnsTopicArns:
         - !Ref BuildNotificationTopic
 
   CodeStarNotificationsServiceLinkedRole:
