@@ -143,45 +143,6 @@ Resources:
               Service: cloudwatch.amazonaws.com
 
   #
-  # Pipeline Build SNS Topic
-  #
-
-  BuildNotificationTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      TopicName: !Sub "${AWS::StackName}-BuildNotificationTopic"
-      KmsMasterKeyId: !Ref NotificationTopicKey
-      Tags:
-        - Key: Name
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "BuildNotificationTopic"
-        - Key: Product
-          Value: !Ref ProductTagValue
-        - Key: System
-          Value: !Ref SystemTagValue
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: !Ref OwnerTagValue
-        - Key: Source
-          Value: !Ref SourceTagValue
-
-  BuildNotificationTopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      Topics:
-        - !Ref BuildNotificationTopic
-      PolicyDocument:
-        Statement:
-          - Action: "sns:Publish"
-            Effect: Allow
-            Resource: !Ref BuildNotificationTopic
-            Principal:
-              Service: codestar-notifications.amazonaws.com
-
-  #
   # Shared SNS KMS Key
   #
 
@@ -362,25 +323,3 @@ Resources:
         System: !Ref SystemTagValue
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
-
-  BuildNotificationTopicArnSSM:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Description: The ARN of the Build Notification SNS Topic used for Alert actions
-      Name: !Sub "/${AWS::StackName}/SNS/BuildNotificationTopic/ARN"
-      Type: String
-      Value: !Ref BuildNotificationTopic
-      Tags:
-        Environment: !Ref Environment
-        Product: !Ref ProductTagValue
-        System: !Ref SystemTagValue
-        Owner: !Ref OwnerTagValue
-        Source: !Ref SourceTagValue
-
-Outputs:
-  BuildNotificationTopicArn:
-    Description: >
-      The ARN of the SNS topic that receives CodePipeline build notifications that gets sent to Slack.
-    Value: !Ref BuildNotificationTopic
-    Export:
-      Name: !Sub "${AWS::StackName}-BuildNotificationTopicArn"
